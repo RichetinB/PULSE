@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "default": "ask",
+    "allow": [
+      "git status",
+      "git diff",
+      "pnpm *",
+      "cargo *"
+    ],
+    "deny": [
+      "rm -rf /",
+      "git push"
+    ]
+  },
+  "hooks": {
+    "planned": [
+      "format-on-change",
+      "protect-sensitive-files",
+      "lightweight-test-gate"
+    ]
+  }
+}
