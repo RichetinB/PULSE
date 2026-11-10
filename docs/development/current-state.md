@@ -7,6 +7,8 @@
 - First ADR for stack direction.
 - Initial Claude operating rules/skills skeleton.
 - Initial Tauri 2 + React + TypeScript desktop foundation.
+- Windows NSIS packaging, CI artifact upload, and tag-triggered GitHub Release
+  publishing are configured.
 
 ## Partial
 - Desktop shell and frontend foundation are available under `apps/desktop`.
@@ -15,7 +17,8 @@
 
 ## Known gaps
 - osu!stable/lazer parser selection not implemented.
-- Windows runtime validation is pending until the Windows CI job runs.
+- Windows installer and clean-machine runtime validation are pending until the
+  Windows CI job runs.
 - Native Rust validation is blocked in environments without Cargo.
 
 ## Next steps
