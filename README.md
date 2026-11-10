@@ -45,6 +45,21 @@ The browser Vite server validates the frontend without the desktop shell.
 Tauri and Windows builds are validated by the Windows CI job; they are not
 claimed as locally verified from environments without Cargo and Windows.
 
+## Downloading PULSE for Windows
+
+Windows installers are attached to releases whose tags use the `v*` format,
+such as `v0.1.0`. Download the `.exe` installer from the release page, run it,
+and launch PULSE from the Start menu or installed shortcut. The installer uses
+the Microsoft WebView2 bootstrapper; an internet connection may be needed on
+the first install if WebView2 is not already present.
+
+PULSE is currently distributed as an NSIS installer. A portable ZIP is not
+published unless it has been validated as a standalone application build.
+
+Because release binaries are currently unsigned, Windows SmartScreen may show
+a warning. Verify that the download came from this repository's GitHub Release,
+then select **More info** and **Run anyway** only if you trust the source.
+
 ## Repository docs
 - Architecture overview: `docs/architecture/overview.md`
 - Module map: `docs/architecture/module-map.md`
@@ -52,6 +67,7 @@ claimed as locally verified from environments without Cargo and Windows.
 - ADRs: `docs/adr/`
 - Contribution guide: `CONTRIBUTING.md`
 - Current state and next steps: `docs/development/current-state.md`
+- Windows distribution: `docs/development/windows-distribution.md`
 
 ## Current phase deliverable
 This repository contains the Phase-0 framing artifacts and the initial Phase-1
