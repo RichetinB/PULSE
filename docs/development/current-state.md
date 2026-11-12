@@ -9,17 +9,20 @@
 - Initial Tauri 2 + React + TypeScript desktop foundation.
 - Windows NSIS packaging, CI artifact upload, and tag-triggered GitHub Release
   publishing are configured.
+- Classic osu!standard replay import and bounded Rust parsing are implemented.
 
 ## Partial
 - Desktop shell and frontend foundation are available under `apps/desktop`.
 - Frontend CI and Windows Tauri build workflow are configured.
-- No parser fixtures or analytics tests yet.
+- Replay parser fixtures and focused failure-case tests are available.
 
 ## Known gaps
-- osu!stable/lazer parser selection not implemented.
+- osu!lazer replay compatibility is explicitly rejected pending versioned
+  score-info support.
 - Windows installer and clean-machine runtime validation are pending until the
   Windows CI job runs.
-- Native Rust validation is blocked in environments without Cargo.
+- Native Tauri validation is environment-dependent; this Linux environment
+  lacks the GTK/WebKit system libraries required for a desktop build.
 
 ## Next steps
 1. Implement replay import MVP slice with fixtures.

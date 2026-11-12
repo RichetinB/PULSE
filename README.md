@@ -68,6 +68,7 @@ then select **More info** and **Run anyway** only if you trust the source.
 - Contribution guide: `CONTRIBUTING.md`
 - Current state and next steps: `docs/development/current-state.md`
 - Windows distribution: `docs/development/windows-distribution.md`
+- Replay import: `docs/development/replay-import.md`
 
 ## Current phase deliverable
 This repository contains the Phase-0 framing artifacts and the initial Phase-1
