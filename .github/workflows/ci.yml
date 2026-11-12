@@ -41,6 +41,21 @@ jobs:
       - name: Build
         run: pnpm build
 
+  replay-parser:
+    name: Replay parser checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Test replay parser
+        run: cargo test -p pulse-replay --locked
+
   windows-tauri:
     name: Windows Tauri build
     runs-on: windows-latest
