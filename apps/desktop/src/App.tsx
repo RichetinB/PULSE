@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './App.css'
 import { getDesktopStatus, type DesktopStatus } from './lib/desktopBridge'
+import { importReplay, type ReplaySummary } from './lib/replayBridge'
+import { open } from '@tauri-apps/plugin-dialog'
 
 type SectionId =
   | 'dashboard'
@@ -30,10 +32,10 @@ const sectionContent: Record<
   { eyebrow: string; title: string; description: string }
 > = {
   replay: {
-    eyebrow: 'Coming next',
+    eyebrow: 'Local import',
     title: 'Replay Analyzer',
     description:
-      'Replay import and deterministic analysis will arrive in a later foundation slice.',
+      'Import classic osu!standard replays and inspect their decoded data.',
   },
   weaknesses: {
     eyebrow: 'Planned module',
@@ -64,9 +66,33 @@ const sectionContent: Record<
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>('dashboard')
   const [desktopStatus, setDesktopStatus] = useState<DesktopStatus | null>(null)
+  const [replay, setReplay] = useState<ReplaySummary | null>(null)
+  const [replayState, setReplayState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [replayError, setReplayError] = useState<string | null>(null)
 
   const checkDesktopBridge = async () => {
     setDesktopStatus(await getDesktopStatus())
+  }
+
+  const selectReplay = async () => {
+    setReplayState('loading')
+    setReplayError(null)
+    try {
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        filters: [{ name: 'osu! replay', extensions: ['osr'] }],
+      })
+      if (!selected || Array.isArray(selected)) {
+        setReplayState('idle')
+        return
+      }
+      setReplay(await importReplay(selected))
+      setReplayState('idle')
+    } catch (error) {
+      setReplayState('error')
+      setReplayError(error instanceof Error ? error.message : String(error))
+    }
   }
 
   const activeSectionDetails =
@@ -149,9 +175,9 @@ function App() {
                 <span className="card-icon purple">◈</span>
                 <div>
                   <h3>Replay analysis</h3>
-                  <p>Waiting for the replay import module.</p>
+                  <p>Import a classic osu!standard replay to inspect its data.</p>
                 </div>
-                <span className="card-status">Next</span>
+                <span className="card-status">Available</span>
               </article>
               <article className="status-card">
                 <span className="card-icon blue">⌁</span>
@@ -180,6 +206,43 @@ function App() {
                   : 'Desktop bridge unavailable in browser preview. Run the Tauri shell to connect.'}
               </p>
             )}
+          </div>
+        ) : activeSection === 'replay' ? (
+          <div className="page-content">
+            <section className="replay-card">
+              <span className="eyebrow">Local replay import</span>
+              <h2>Replay Analyzer</h2>
+              <p>
+                Import a classic osu!standard <code>.osr</code> replay. PULSE
+                reads it locally and does not resolve beatmap metadata online.
+              </p>
+              <button className="primary-button" type="button" onClick={selectReplay} disabled={replayState === 'loading'}>
+                {replayState === 'loading' ? 'Reading replay…' : 'Import .osr replay'}
+              </button>
+              {replayError && <p className="error-message" role="alert">{replayError}</p>}
+              {replay && (
+                <div className="replay-results">
+                  <div className="replay-result-header">
+                    <div>
+                      <span className="eyebrow">Imported replay</span>
+                      <h3>{replay.player_name ?? 'Unknown player'}</h3>
+                    </div>
+                    <span className="status-pill">{replay.game_mode}</span>
+                  </div>
+                  <dl className="replay-grid">
+                    <div><dt>Beatmap hash</dt><dd>{replay.beatmap_hash ?? 'Unknown'}</dd></div>
+                    <div><dt>Played</dt><dd>{new Date(replay.timestamp).toLocaleString()}</dd></div>
+                    <div><dt>Score</dt><dd>{replay.score.toLocaleString()}</dd></div>
+                    <div><dt>Max combo</dt><dd>{replay.max_combo.toLocaleString()}</dd></div>
+                    <div><dt>Accuracy</dt><dd>{replay.accuracy === null ? 'Unknown' : `${(replay.accuracy * 100).toFixed(2)}%`}</dd></div>
+                    <div><dt>Replay events</dt><dd>{replay.event_count.toLocaleString()}</dd></div>
+                    <div><dt>Mods</dt><dd>{replay.mods.length ? replay.mods.join(', ') : 'None'}</dd></div>
+                    <div><dt>Hits</dt><dd>300: {replay.hit_counts.count_300} · 100: {replay.hit_counts.count_100} · 50: {replay.hit_counts.count_50} · Geki: {replay.hit_counts.count_geki} · Katu: {replay.hit_counts.count_katu} · Miss: {replay.hit_counts.count_miss}</dd></div>
+                    <div><dt>Unknown mod bits</dt><dd>{replay.unknown_mod_bits ? `0x${replay.unknown_mod_bits.toString(16)}` : 'None'}</dd></div>
+                  </dl>
+                </div>
+              )}
+            </section>
           </div>
         ) : (
           <div className="page-content">
