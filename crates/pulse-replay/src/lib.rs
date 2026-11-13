@@ -638,10 +638,7 @@ mod tests {
         assert_eq!(beatmap.artist.as_deref(), Some("Test Artist"));
         assert_eq!(beatmap.version.as_deref(), Some("Insane"));
         assert_eq!(beatmap.hit_object_count, 1);
-        assert_eq!(
-            beatmap.md5,
-            "78176277b0e28a20b6394fbc20bdad1f"
-        );
+        assert_eq!(beatmap.md5, "78176277b0e28a20b6394fbc20bdad1f");
     }
 
     #[test]
