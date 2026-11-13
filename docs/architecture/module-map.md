@@ -1,15 +1,15 @@
 # Module Map
 
-## apps/desktop (planned)
+## apps/desktop
 - Responsibility: UI, navigation, interaction states.
 - Public API: user-facing screens and command handlers.
 - Depends on: application DTO contracts.
 - Tests: UI unit tests + selected E2E flows.
 
 ## apps/api
-- Responsibility: optional HTTP API boundary and PostgreSQL connectivity.
-- Public API: `/api/health` foundation; future online DTOs must be versioned.
-- Depends on: NestJS, TypeORM, PostgreSQL; never parses replay or beatmap files.
+- Responsibility: optional HTTP API boundary and PostgreSQL access through Prisma.
+- Public API: `/api/health`; future online DTOs must be versioned.
+- Data model: PULSE users, external OAuth identities, and hashed sessions.
 - Tests: service unit tests and HTTP-level endpoint tests.
 - Constraint: local desktop replay analysis must not depend on this service.
 

@@ -1,35 +1,39 @@
-import { DataSource } from 'typeorm'
+import { Test, TestingModule } from '@nestjs/testing'
+import { PrismaService } from '../database/prisma.service'
 import { HealthService } from './health.service'
 
 describe('HealthService', () => {
-  let dataSource: DataSource
+  let moduleRef: TestingModule
+  let prisma: { $queryRaw: jest.Mock }
   let service: HealthService
 
-  beforeEach(() => {
-    dataSource = new DataSource({
-      type: 'postgres',
-      host: 'localhost',
-      username: 'test',
-      password: 'test',
-      database: 'test',
-    })
-    service = new HealthService(dataSource)
+  beforeEach(async () => {
+    prisma = { $queryRaw: jest.fn() }
+    moduleRef = await Test.createTestingModule({
+      providers: [
+        HealthService,
+        { provide: PrismaService, useValue: prisma },
+      ],
+    }).compile()
+    service = moduleRef.get(HealthService)
+  })
+
+  afterEach(async () => {
+    await moduleRef.close()
   })
 
   it('reports the API and database as healthy after a successful query', async () => {
-    const query = jest
-      .spyOn(dataSource, 'query')
-      .mockResolvedValue([{ '?column?': 1 }])
+    prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }])
 
     await expect(service.check()).resolves.toEqual({
       status: 'ok',
       database: 'connected',
     })
-    expect(query).toHaveBeenCalledWith('SELECT 1')
+    expect(prisma.$queryRaw).toHaveBeenCalled()
   })
 
   it('reports database unavailability when the health query fails', async () => {
-    jest.spyOn(dataSource, 'query').mockRejectedValue(new Error('connection failed'))
+    prisma.$queryRaw.mockRejectedValue(new Error('connection failed'))
 
     await expect(service.check()).rejects.toMatchObject({
       status: 503,

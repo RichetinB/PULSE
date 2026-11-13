@@ -1,14 +1,14 @@
 import { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
-import { DataSource } from 'typeorm'
 import request from 'supertest'
+import { PrismaService } from '../src/database/prisma.service'
 import { HealthController } from '../src/health/health.controller'
 import { HealthService } from '../src/health/health.service'
 
 describe('Health endpoint', () => {
   let app: INestApplication
-  const dataSource = {
-    query: jest.fn(),
+  const prisma = {
+    $queryRaw: jest.fn(),
   }
 
   beforeAll(async () => {
@@ -16,7 +16,7 @@ describe('Health endpoint', () => {
       controllers: [HealthController],
       providers: [
         HealthService,
-        { provide: DataSource, useValue: dataSource },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile()
 
@@ -26,7 +26,7 @@ describe('Health endpoint', () => {
   })
 
   beforeEach(() => {
-    dataSource.query.mockReset()
+    prisma.$queryRaw.mockReset()
   })
 
   afterAll(async () => {
@@ -34,7 +34,7 @@ describe('Health endpoint', () => {
   })
 
   it('returns HTTP 200 and database status at GET /api/health', async () => {
-    dataSource.query.mockResolvedValue([{ '?column?': 1 }])
+    prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }])
 
     await request(app.getHttpServer())
       .get('/api/health')
@@ -43,7 +43,7 @@ describe('Health endpoint', () => {
   })
 
   it('returns HTTP 503 when PostgreSQL is unavailable', async () => {
-    dataSource.query.mockRejectedValue(new Error('connection failed'))
+    prisma.$queryRaw.mockRejectedValue(new Error('connection failed'))
 
     await request(app.getHttpServer())
       .get('/api/health')

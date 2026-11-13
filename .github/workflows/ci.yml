@@ -44,6 +44,9 @@ jobs:
   api:
     name: API checks
     runs-on: ubuntu-latest
+    env:
+      # Used only by Prisma config/client generation; tests mock database access.
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
     defaults:
       run:
         working-directory: apps/api
