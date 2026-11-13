@@ -4,6 +4,12 @@ PULSE imports classic osu!standard `.osr` files locally through the Replay
 Analyzer screen. The selected file is read by the Rust `pulse-replay` crate;
 the parser has no Tauri, UI, network, or storage dependencies.
 
+The Replay Analyzer also accepts a manually selected classic `.osu` beatmap.
+The parser computes the MD5 from the exact imported bytes and exposes the
+metadata needed for display. A replay is an exact match when its embedded
+beatmap hash equals that MD5; no title, path, or online lookup is used as a
+fallback.
+
 The parser validates the classic replay header, requires game mode `0`
 (osu!standard), validates strings and replay events, and bounds input at 32 MiB,
 compressed replay data at 16 MiB, decompressed replay data at 32 MiB, strings
@@ -22,6 +28,10 @@ Classic osu!standard replay metadata, hit counts, mods, timestamps, and replay
 event counts are supported. Beatmap titles, star ratings, aim accuracy, and
 timing errors are intentionally not inferred because they require validated
 beatmap data or additional analysis.
+
+Classic `.osu` format version, osu!standard mode, title, artist, difficulty
+version, hit-object count, and exact MD5 identity are supported. Other game
+modes are rejected explicitly.
 
 osu!lazer replay versions are detected and rejected explicitly in this slice.
 They are not silently interpreted as classic replays. Lazer compatibility can
