@@ -89,6 +89,8 @@ pub enum ReplayError {
     UnsupportedLazerVersion(u32),
     #[error("unsupported or invalid replay format: {0}")]
     InvalidFormat(String),
+    #[error("unsupported or invalid beatmap format: {0}")]
+    InvalidBeatmapFormat(String),
     #[error("replay decompressed data exceeds the {MAX_DECOMPRESSED_BYTES} byte limit")]
     DecompressionLimitExceeded,
     #[error("replay data contains invalid UTF-8")]
@@ -121,6 +123,7 @@ pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
     }
 
     let text = std::str::from_utf8(data).map_err(|_| ReplayError::InvalidBeatmapUtf8)?;
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let mut format_version = None;
     let mut section = "";
     let mut title = None;
@@ -133,7 +136,7 @@ pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
     for raw_line in text.lines() {
         line_count += 1;
         if line_count > MAX_BEATMAP_LINES {
-            return Err(ReplayError::InvalidFormat(
+            return Err(ReplayError::InvalidBeatmapFormat(
                 "beatmap contains too many lines".to_string(),
             ));
         }
@@ -144,7 +147,7 @@ pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
         }
         if let Some(header) = line.strip_prefix("osu file format v") {
             format_version = Some(header.parse::<u32>().map_err(|_| {
-                ReplayError::InvalidFormat("invalid beatmap format version".to_string())
+                ReplayError::InvalidBeatmapFormat("invalid beatmap format version".to_string())
             })?);
             continue;
         }
@@ -158,7 +161,9 @@ pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
                 if let Some((key, value)) = line.split_once(':') {
                     if key.trim() == "Mode" {
                         let mode = value.trim().parse::<u8>().map_err(|_| {
-                            ReplayError::InvalidFormat("invalid beatmap game mode".to_string())
+                            ReplayError::InvalidBeatmapFormat(
+                                "invalid beatmap game mode".to_string(),
+                            )
                         })?;
                         if mode != 0 {
                             return Err(ReplayError::UnsupportedGameMode(mode));
@@ -184,10 +189,10 @@ pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
     }
 
     let format_version = format_version.ok_or_else(|| {
-        ReplayError::InvalidFormat("beatmap is missing its format version".to_string())
+        ReplayError::InvalidBeatmapFormat("beatmap is missing its format version".to_string())
     })?;
     if game_mode.is_none() {
-        return Err(ReplayError::InvalidFormat(
+        return Err(ReplayError::InvalidBeatmapFormat(
             "beatmap is missing osu!standard mode metadata".to_string(),
         ));
     }
@@ -639,6 +644,29 @@ mod tests {
         assert_eq!(beatmap.version.as_deref(), Some("Insane"));
         assert_eq!(beatmap.hit_object_count, 1);
         assert_eq!(beatmap.md5, "78176277b0e28a20b6394fbc20bdad1f");
+    }
+
+    #[test]
+    fn accepts_utf8_bom_and_hashes_original_bytes_for_replay_matching() {
+        let data = b"\xef\xbb\xbfosu file format v14\n[General]\nMode: 0\n[Metadata]\nTitle:Map\n";
+        let beatmap = parse_beatmap_bytes(data).unwrap();
+        let mut replay = parse_bytes(&fixture(0, &compressed_events())).unwrap();
+        replay.beatmap_hash = Some(beatmap.md5.clone());
+
+        assert_eq!(beatmap.format_version, 14);
+        assert_eq!(beatmap.md5, "a1fb420b1ed0b6d7aa24678832f35a58");
+        assert!(beatmap.matches_replay(&replay));
+        assert_ne!(beatmap.md5, format!("{:x}", md5::Md5::digest(&data[3..])));
+    }
+
+    #[test]
+    fn labels_invalid_beatmap_format_as_a_beatmap_error() {
+        let error = parse_beatmap_bytes(b"\xef\xbb\xbf[General]\nMode: 0\n").unwrap_err();
+        assert!(matches!(error, ReplayError::InvalidBeatmapFormat(_)));
+        assert_eq!(
+            error.to_string(),
+            "unsupported or invalid beatmap format: beatmap is missing its format version"
+        );
     }
 
     #[test]
