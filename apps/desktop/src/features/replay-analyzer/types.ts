@@ -1,5 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
-
 export type ReplaySummary = {
   game_mode: 'osu!standard'
   game_version: number
@@ -34,10 +32,7 @@ export type BeatmapSummary = {
   hit_object_count: number
 }
 
-export async function importReplay(path: string): Promise<ReplaySummary> {
-  return invoke<ReplaySummary>('import_replay', { path })
-}
-
-export async function importBeatmap(path: string): Promise<BeatmapSummary> {
-  return invoke<BeatmapSummary>('import_beatmap', { path })
+export type ReplayImportService = {
+  importReplay: () => Promise<ReplaySummary | null>
+  importBeatmap: () => Promise<BeatmapSummary | null>
 }
