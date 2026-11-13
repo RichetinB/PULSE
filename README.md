@@ -2,7 +2,7 @@
 
 PULSE is a local-first desktop performance coach for **osu!standard**.
 
-Current status: **Phase 1 foundation (desktop shell)**.
+Current status: **Desktop foundation and initial optional API foundation**.
 
 ## Goals
 - Analyze replay performance with deterministic, explainable metrics.
@@ -15,6 +15,11 @@ Current status: **Phase 1 foundation (desktop shell)**.
 - UI: **React + TypeScript + Vite**
 - Core/analytics/storage adapters: **Rust crates**
 - Local storage: **SQLite**
+- Optional web API: **NestJS + TypeScript + PostgreSQL**
+
+The API is an optional online foundation for future web and synchronization
+features. It is not required for local replay import or analysis; replay
+parsing and performance analysis remain Rust responsibilities.
 
 ## Desktop development
 
@@ -45,6 +50,16 @@ The browser Vite server validates the frontend without the desktop shell.
 Tauri and Windows builds are validated by the Windows CI job; they are not
 claimed as locally verified from environments without Cargo and Windows.
 
+## API development
+
+The optional NestJS API lives in `apps/api`. It currently provides only a
+database-aware health endpoint; authentication, replay synchronization, and a
+web client are not implemented.
+
+See [apps/api/README.md](apps/api/README.md) for environment setup, Docker
+Compose, and API checks. PostgreSQL is bound to the local loopback interface
+only, and the desktop continues to work without the API.
+
 ## Downloading PULSE for Windows
 
 Windows installers are attached to releases whose tags use the `v*` format,
@@ -67,6 +82,7 @@ then select **More info** and **Run anyway** only if you trust the source.
 - ADRs: `docs/adr/`
 - Contribution guide: `CONTRIBUTING.md`
 - Current state and next steps: `docs/development/current-state.md`
+- API development: `apps/api/README.md`
 - Windows distribution: `docs/development/windows-distribution.md`
 - Replay import: `docs/development/replay-import.md`
 

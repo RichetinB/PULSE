@@ -10,9 +10,13 @@
 - Windows NSIS packaging, CI artifact upload, and tag-triggered GitHub Release
   publishing are configured.
 - Classic osu!standard replay import and bounded Rust parsing are implemented.
+- Initial NestJS API foundation is available under `apps/api` with a
+  database-aware health endpoint and local PostgreSQL Compose setup.
 
 ## Partial
 - Desktop shell and frontend foundation are available under `apps/desktop`.
+- API authentication, persisted domain data, and replay synchronization are
+  not implemented.
 - Frontend CI and Windows Tauri build workflow are configured.
 - Replay parser fixtures and focused failure-case tests are available.
 
@@ -28,6 +32,7 @@
 1. Implement replay import MVP slice with fixtures.
 2. Add versioned application/domain contracts.
 3. Add local persistence and deterministic analytics slices.
+4. Add API entities and migrations only when an online use case is approved.
 
 ## Validation commands used in this phase
 - `git status --short --branch`
