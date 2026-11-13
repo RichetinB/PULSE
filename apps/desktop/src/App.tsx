@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import './App.css'
 import { getDesktopStatus, type DesktopStatus } from './lib/desktopBridge'
-import { importReplay, type ReplaySummary } from './lib/replayBridge'
+import {
+  importBeatmap,
+  importReplay,
+  type BeatmapSummary,
+  type ReplaySummary,
+} from './lib/replayBridge'
 import { open } from '@tauri-apps/plugin-dialog'
 
 type SectionId =
@@ -69,6 +74,9 @@ function App() {
   const [replay, setReplay] = useState<ReplaySummary | null>(null)
   const [replayState, setReplayState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [replayError, setReplayError] = useState<string | null>(null)
+  const [beatmap, setBeatmap] = useState<BeatmapSummary | null>(null)
+  const [beatmapState, setBeatmapState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [beatmapError, setBeatmapError] = useState<string | null>(null)
 
   const checkDesktopBridge = async () => {
     setDesktopStatus(await getDesktopStatus())
@@ -94,6 +102,32 @@ function App() {
       setReplayError(error instanceof Error ? error.message : String(error))
     }
   }
+
+  const selectBeatmap = async () => {
+    setBeatmapState('loading')
+    setBeatmapError(null)
+    try {
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        filters: [{ name: 'osu! beatmap', extensions: ['osu'] }],
+      })
+      if (!selected || Array.isArray(selected)) {
+        setBeatmapState('idle')
+        return
+      }
+      setBeatmap(await importBeatmap(selected))
+      setBeatmapState('idle')
+    } catch (error) {
+      setBeatmapState('error')
+      setBeatmapError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const beatmapMatchesReplay =
+    replay?.beatmap_hash &&
+    beatmap &&
+    replay.beatmap_hash.toLowerCase() === beatmap.md5.toLowerCase()
 
   const activeSectionDetails =
     activeSection === 'dashboard' ? null : sectionContent[activeSection]
@@ -220,6 +254,25 @@ function App() {
                 {replayState === 'loading' ? 'Reading replay…' : 'Import .osr replay'}
               </button>
               {replayError && <p className="error-message" role="alert">{replayError}</p>}
+              <button className="secondary-button" type="button" onClick={selectBeatmap} disabled={beatmapState === 'loading'}>
+                {beatmapState === 'loading' ? 'Reading beatmap…' : 'Import matching .osu beatmap'}
+              </button>
+              {beatmapError && <p className="error-message" role="alert">{beatmapError}</p>}
+              {beatmap && (
+                <div className="beatmap-results">
+                  <span className="eyebrow">Imported beatmap</span>
+                  <h3>{beatmap.artist ?? 'Unknown artist'} — {beatmap.title ?? 'Untitled map'}</h3>
+                  <p>{beatmap.version ?? 'Unknown difficulty'} · {beatmap.hit_object_count.toLocaleString()} hit objects</p>
+                  <code>{beatmap.md5}</code>
+                  {replay && (
+                    <p className={beatmapMatchesReplay ? 'match-success' : 'match-failure'} role="status">
+                      {beatmapMatchesReplay
+                        ? 'Exact replay match'
+                        : 'Beatmap does not match this replay'}
+                    </p>
+                  )}
+                </div>
+              )}
               {replay && (
                 <div className="replay-results">
                   <div className="replay-result-header">

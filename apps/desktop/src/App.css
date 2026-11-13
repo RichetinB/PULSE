@@ -423,7 +423,57 @@ h3 {
   opacity: 0.65;
 }
 
+.secondary-button {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface-raised);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.secondary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .error-message {
+  color: #ff9a9a !important;
+}
+
+.beatmap-results {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-raised);
+}
+
+.beatmap-results p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.beatmap-results code {
+  overflow-wrap: anywhere;
+  color: var(--blue);
+  font-size: 11px;
+}
+
+.match-success,
+.match-failure {
+  font-weight: 600;
+}
+
+.match-success {
+  color: var(--green) !important;
+}
+
+.match-failure {
   color: #ff9a9a !important;
 }
 
