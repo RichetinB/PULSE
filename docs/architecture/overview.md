@@ -12,7 +12,7 @@ Layered modular structure inspired by Clean/Hexagonal boundaries:
 - **Application**: use-case orchestration
 - **Domain**: core entities, rules, invariants
 - **Infrastructure**: replay files, beatmaps, SQLite, optional APIs
-- **API**: NestJS HTTP boundary and PostgreSQL access for future online features
+- **API**: NestJS HTTP boundary and Prisma/PostgreSQL access for future online features
 - **Analytics**: deterministic metrics + diagnostics
 - **Training**: recommendation logic
 - **AI (optional)**: explanation assistant over computed results

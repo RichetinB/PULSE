@@ -52,13 +52,15 @@ claimed as locally verified from environments without Cargo and Windows.
 
 ## API development
 
-The optional NestJS API lives in `apps/api`. It currently provides only a
-database-aware health endpoint; authentication, replay synchronization, and a
-web client are not implemented.
+The optional NestJS API lives in `apps/api`. It currently provides a
+database-aware health endpoint and an initial Prisma schema; authentication,
+replay synchronization, and a web client are not implemented.
 
-See [apps/api/README.md](apps/api/README.md) for environment setup, Docker
-Compose, and API checks. PostgreSQL is bound to the local loopback interface
-only, and the desktop continues to work without the API.
+See [apps/api/README.md](apps/api/README.md) and
+[docs/architecture/database.md](docs/architecture/database.md) for Prisma,
+migrations, environment setup, and Docker Compose. PostgreSQL is bound to the
+local loopback interface only, and the desktop continues to work without the
+API.
 
 ## Downloading PULSE for Windows
 

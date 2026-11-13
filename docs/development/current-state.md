@@ -15,8 +15,9 @@
 
 ## Partial
 - Desktop shell and frontend foundation are available under `apps/desktop`.
-- API authentication, persisted domain data, and replay synchronization are
-  not implemented.
+- Prisma `User`, `OAuthAccount`, and `Session` schemas are prepared, but API
+  authentication, session issuance, and replay synchronization are not
+  implemented.
 - Frontend CI and Windows Tauri build workflow are configured.
 - Replay parser fixtures and focused failure-case tests are available.
 

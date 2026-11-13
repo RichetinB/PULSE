@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import Joi from 'joi'
 import { parseCorsOrigins } from './config/cors-origins'
-import { DatabaseModule } from './database/database.module'
 import { HealthModule } from './health/health.module'
 
 @Module({
@@ -26,7 +25,6 @@ import { HealthModule } from './health/health.module'
           }),
       }),
     }),
-    DatabaseModule,
     HealthModule,
   ],
 })

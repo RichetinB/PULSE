@@ -3,7 +3,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common'
-import { DataSource } from 'typeorm'
+import { PrismaService } from '../database/prisma.service'
 
 export type HealthResponse = {
   status: 'ok'
@@ -14,11 +14,11 @@ export type HealthResponse = {
 export class HealthService {
   private readonly logger = new Logger(HealthService.name)
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async check(): Promise<HealthResponse> {
     try {
-      await this.dataSource.query('SELECT 1')
+      await this.prisma.$queryRaw`SELECT 1`
       return { status: 'ok', database: 'connected' }
     } catch {
       this.logger.warn('Database health check failed')

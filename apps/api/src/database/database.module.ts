@@ -1,21 +1,10 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule, ConfigService } from '@nestjs/config'
-import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigModule } from '@nestjs/config'
+import { PrismaService } from './prisma.service'
 
 @Module({
-  imports: [
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres' as const,
-        url: config.getOrThrow<string>('DATABASE_URL'),
-        autoLoadEntities: true,
-        synchronize: false,
-        retryAttempts: 5,
-        retryDelay: 1000,
-      }),
-    }),
-  ],
+  imports: [ConfigModule],
+  providers: [PrismaService],
+  exports: [PrismaService],
 })
 export class DatabaseModule {}

@@ -7,8 +7,10 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY nest-cli.json tsconfig*.json ./
+COPY prisma.config.ts ./
+COPY prisma ./prisma
 COPY src ./src
-RUN pnpm build
+RUN DATABASE_URL=postgresql://generate:generate@127.0.0.1:5432/generate pnpm build
 
 FROM node:22-alpine AS runtime
 
