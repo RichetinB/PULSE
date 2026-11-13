@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use liblzma::read::XzDecoder;
+use md5::{Digest, Md5};
 use serde::Serialize;
 use std::{
     fs,
@@ -14,6 +15,7 @@ const MAX_DECOMPRESSED_BYTES: u64 = 32 * 1024 * 1024;
 const MAX_STRING_BYTES: u64 = 1024 * 1024;
 const MAX_EVENTS: usize = 2_000_000;
 const FIRST_LAZER_VERSION: u32 = 30_000_000;
+const MAX_BEATMAP_LINES: usize = 2_000_000;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ReplaySummary {
@@ -31,6 +33,26 @@ pub struct ReplaySummary {
     pub unknown_mod_bits: u32,
     pub timestamp: String,
     pub event_count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BeatmapSummary {
+    pub md5: String,
+    pub format_version: u32,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub version: Option<String>,
+    pub game_mode: GameMode,
+    pub hit_object_count: usize,
+}
+
+impl BeatmapSummary {
+    pub fn matches_replay(&self, replay: &ReplaySummary) -> bool {
+        replay
+            .beatmap_hash
+            .as_deref()
+            .is_some_and(|hash| hash.eq_ignore_ascii_case(&self.md5))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -71,6 +93,8 @@ pub enum ReplayError {
     DecompressionLimitExceeded,
     #[error("replay data contains invalid UTF-8")]
     InvalidUtf8(#[from] std::string::FromUtf8Error),
+    #[error("beatmap file contains invalid UTF-8")]
+    InvalidBeatmapUtf8,
 }
 
 pub fn parse_file(path: impl AsRef<Path>) -> Result<ReplaySummary, ReplayError> {
@@ -80,6 +104,111 @@ pub fn parse_file(path: impl AsRef<Path>) -> Result<ReplaySummary, ReplayError> 
     }
 
     parse_bytes(&fs::read(path)?)
+}
+
+pub fn parse_beatmap_file(path: impl AsRef<Path>) -> Result<BeatmapSummary, ReplayError> {
+    let metadata = fs::metadata(path.as_ref())?;
+    if metadata.len() > MAX_FILE_BYTES {
+        return Err(ReplayError::FileTooLarge);
+    }
+
+    parse_beatmap_bytes(&fs::read(path)?)
+}
+
+pub fn parse_beatmap_bytes(data: &[u8]) -> Result<BeatmapSummary, ReplayError> {
+    if data.len() as u64 > MAX_FILE_BYTES {
+        return Err(ReplayError::FileTooLarge);
+    }
+
+    let text = std::str::from_utf8(data).map_err(|_| ReplayError::InvalidBeatmapUtf8)?;
+    let mut format_version = None;
+    let mut section = "";
+    let mut title = None;
+    let mut artist = None;
+    let mut version = None;
+    let mut game_mode = None;
+    let mut hit_object_count = 0;
+    let mut line_count = 0;
+
+    for raw_line in text.lines() {
+        line_count += 1;
+        if line_count > MAX_BEATMAP_LINES {
+            return Err(ReplayError::InvalidFormat(
+                "beatmap contains too many lines".to_string(),
+            ));
+        }
+
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with("//") {
+            continue;
+        }
+        if let Some(header) = line.strip_prefix("osu file format v") {
+            format_version = Some(header.parse::<u32>().map_err(|_| {
+                ReplayError::InvalidFormat("invalid beatmap format version".to_string())
+            })?);
+            continue;
+        }
+        if line.starts_with('[') && line.ends_with(']') {
+            section = &line[1..line.len() - 1];
+            continue;
+        }
+
+        match section {
+            "General" => {
+                if let Some((key, value)) = line.split_once(':') {
+                    if key.trim() == "Mode" {
+                        let mode = value.trim().parse::<u8>().map_err(|_| {
+                            ReplayError::InvalidFormat("invalid beatmap game mode".to_string())
+                        })?;
+                        if mode != 0 {
+                            return Err(ReplayError::UnsupportedGameMode(mode));
+                        }
+                        game_mode = Some(GameMode::Standard);
+                    }
+                }
+            }
+            "Metadata" => {
+                if let Some((key, value)) = line.split_once(':') {
+                    let value = value.trim().to_string();
+                    match key.trim() {
+                        "Title" => title = Some(value),
+                        "Artist" => artist = Some(value),
+                        "Version" => version = Some(value),
+                        _ => {}
+                    }
+                }
+            }
+            "HitObjects" => hit_object_count += 1,
+            _ => {}
+        }
+    }
+
+    let format_version = format_version.ok_or_else(|| {
+        ReplayError::InvalidFormat("beatmap is missing its format version".to_string())
+    })?;
+    if game_mode.is_none() {
+        return Err(ReplayError::InvalidFormat(
+            "beatmap is missing osu!standard mode metadata".to_string(),
+        ));
+    }
+
+    let mut digest = Md5::new();
+    digest.update(data);
+    let md5 = digest
+        .finalize()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+
+    Ok(BeatmapSummary {
+        md5,
+        format_version,
+        title,
+        artist,
+        version,
+        game_mode: GameMode::Standard,
+        hit_object_count,
+    })
 }
 
 pub fn parse_bytes(data: &[u8]) -> Result<ReplaySummary, ReplayError> {
@@ -497,5 +626,44 @@ mod tests {
         let replay = parse_bytes(include_bytes!("../tests/fixtures/classic-standard.osr")).unwrap();
         let json = serde_json::to_value(replay).unwrap();
         assert_eq!(json["game_mode"], "osu!standard");
+    }
+
+    #[test]
+    fn parses_classic_beatmap_metadata_and_hashes_exact_input_bytes() {
+        let data = b"osu file format v14\r\n\r\n[General]\r\nMode: 0\r\n\r\n[Metadata]\r\nTitle:Test Map\r\nArtist:Test Artist\r\nVersion:Insane\r\n\r\n[HitObjects]\r\n256,192,1000,1,0,0:0:0:0:\r\n";
+        let beatmap = parse_beatmap_bytes(data).unwrap();
+
+        assert_eq!(beatmap.format_version, 14);
+        assert_eq!(beatmap.title.as_deref(), Some("Test Map"));
+        assert_eq!(beatmap.artist.as_deref(), Some("Test Artist"));
+        assert_eq!(beatmap.version.as_deref(), Some("Insane"));
+        assert_eq!(beatmap.hit_object_count, 1);
+        assert_eq!(
+            beatmap.md5,
+            "78176277b0e28a20b6394fbc20bdad1f"
+        );
+    }
+
+    #[test]
+    fn matches_replay_by_exact_beatmap_md5_case_insensitively() {
+        let beatmap = parse_beatmap_bytes(
+            b"osu file format v14\n[General]\nMode: 0\n[Metadata]\nTitle:Map\n",
+        )
+        .unwrap();
+        let mut replay = parse_bytes(&fixture(0, &compressed_events())).unwrap();
+        replay.beatmap_hash = Some(beatmap.md5.to_uppercase());
+
+        assert!(beatmap.matches_replay(&replay));
+        replay.beatmap_hash = Some("different".to_string());
+        assert!(!beatmap.matches_replay(&replay));
+    }
+
+    #[test]
+    fn rejects_non_standard_beatmaps() {
+        let error = parse_beatmap_bytes(
+            b"osu file format v14\n[General]\nMode: 1\n[Metadata]\nTitle:Taiko\n",
+        )
+        .unwrap_err();
+        assert!(matches!(error, ReplayError::UnsupportedGameMode(1)));
     }
 }
