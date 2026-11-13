@@ -30,8 +30,10 @@ timing errors are intentionally not inferred because they require validated
 beatmap data or additional analysis.
 
 Classic `.osu` format version, osu!standard mode, title, artist, difficulty
-version, hit-object count, and exact MD5 identity are supported. Other game
-modes are rejected explicitly.
+version, hit-object count, and exact MD5 identity are supported. An optional
+UTF-8 BOM before the format-version header is accepted, while the MD5 remains
+calculated from the original raw file bytes. Other game modes are rejected
+explicitly.
 
 osu!lazer replay versions are detected and rejected explicitly in this slice.
 They are not silently interpreted as classic replays. Lazer compatibility can
