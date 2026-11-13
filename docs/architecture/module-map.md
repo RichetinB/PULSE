@@ -6,6 +6,13 @@
 - Depends on: application DTO contracts.
 - Tests: UI unit tests + selected E2E flows.
 
+## apps/api
+- Responsibility: optional HTTP API boundary and PostgreSQL connectivity.
+- Public API: `/api/health` foundation; future online DTOs must be versioned.
+- Depends on: NestJS, TypeORM, PostgreSQL; never parses replay or beatmap files.
+- Tests: service unit tests and HTTP-level endpoint tests.
+- Constraint: local desktop replay analysis must not depend on this service.
+
 ## crates/pulse-domain (planned)
 - Responsibility: entities, value objects, invariants.
 - Public API: domain types and validation rules.
