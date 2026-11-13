@@ -1,8 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-
-export type DesktopStatus =
-  | { available: true; version: string }
-  | { available: false }
+import type { DesktopStatus } from '../../app/contracts'
 
 const isTauriRuntime = () =>
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
