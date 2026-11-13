@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.45", features = ["clock"] }
+md-5 = "0.10.6"
 liblzma = "0.4.9"
 serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.17"

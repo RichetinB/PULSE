@@ -24,6 +24,20 @@ export type ReplaySummary = {
   event_count: number
 }
 
+export type BeatmapSummary = {
+  md5: string
+  format_version: number
+  title: string | null
+  artist: string | null
+  version: string | null
+  game_mode: 'osu!standard'
+  hit_object_count: number
+}
+
 export async function importReplay(path: string): Promise<ReplaySummary> {
   return invoke<ReplaySummary>('import_replay', { path })
+}
+
+export async function importBeatmap(path: string): Promise<BeatmapSummary> {
+  return invoke<BeatmapSummary>('import_beatmap', { path })
 }

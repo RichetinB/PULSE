@@ -20,6 +20,9 @@ describe('App navigation', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'Replay Analyzer' }))
     expect(screen.getByRole('button', { name: 'Import .osr replay' })).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Import matching .osu beatmap' }),
+    ).toBeVisible()
     expect(screen.getByText(/classic osu!standard/)).toBeVisible()
   })
 })
