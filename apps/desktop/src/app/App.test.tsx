@@ -4,9 +4,15 @@ import App from './App'
 
 afterEach(cleanup)
 
+const auth = {
+  getCurrentUser: async () => null,
+  startOsuLogin: () => {},
+  logout: async () => {},
+}
+
 describe('App navigation', () => {
   it('marks the selected section and shows planned sections honestly', () => {
-    render(<App />)
+    render(<App auth={auth} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Weaknesses' }))
 
@@ -20,7 +26,7 @@ describe('App navigation', () => {
   })
 
   it('shows the Replay Analyzer import controls', () => {
-    render(<App />)
+    render(<App auth={auth} />)
     fireEvent.click(screen.getByRole('button', { name: 'Replay Analyzer' }))
 
     expect(screen.getByRole('heading', { name: 'Replay Analyzer', level: 1 }))
