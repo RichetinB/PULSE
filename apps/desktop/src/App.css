@@ -209,6 +209,40 @@ h3 {
   white-space: nowrap;
 }
 
+.account-area {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.account-name {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.auth-error {
+  width: 100%;
+  color: #ff9a9a;
+  font-size: 11px;
+  text-align: right;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  color: var(--purple);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.text-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .phase-badge {
   padding: 8px 12px;
 }
