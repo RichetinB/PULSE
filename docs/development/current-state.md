@@ -5,7 +5,6 @@
 - Phase-0 framing documentation.
 - Recommended architecture and module boundaries.
 - First ADR for stack direction.
-- Initial Claude operating rules/skills skeleton.
 - Initial Tauri 2 + React + TypeScript desktop foundation.
 - Windows NSIS packaging, CI artifact upload, and tag-triggered GitHub Release
   publishing are configured.
